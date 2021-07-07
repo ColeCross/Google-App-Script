@@ -1,0 +1,75 @@
+//This function is designed with a specific spreadsheet and output file format, but certain aspects of the function can be edited in order to work with other formats
+//of files and spreadsheets. The output file in question is created by an automatic, proprietary program used by the WV DEP that prints its output files in a specific text format 
+//that allows for this function to exploit patterns in the formatting in order to accurately plot the two distinct halves of the output data. The first half, being a header, is 
+//printed within a single column as it is mostly all text. The second half, being a table of data values, needs to be plotted as such, with values being in separated cells. This 
+//function is designed with these requirements in mind. Due to security concerns, I cannot provide an example of the output file format that the function is designed around, but 
+//this code should work with other file formats with some tweaking. The file being plotted is expected to be within the user's Google Drive. Upon testing, the file can be in or 
+//out of a folder with no significant effect on performance. This function was created due to a need for a way to plot file data to a spreadsheet as Google Sheets lacks an
+//internal function to do so like Excel has.
+
+//function to plot content in an output file to the output sheet
+function plotOutput(filename){
+
+  var files = DriveApp.getFilesByName(filename); //get list of files with name = filename from user's Google Drive
+
+  //verify if there is a file, throw error if there is not
+  if (!files.hasNext()) {
+    throw new Error("No file with the name " + files);
+  }
+
+  var file = files.next(); //get first file with name filename (make sure the desired file is the first or only file with a given name)
+
+  //convert all text in file to a blob, then a string
+  var content = file.getBlob().getDataAsString("utf8");
+
+  //divide content into 2 parts
+  var index = content.lastIndexOf("TT"); //header of output files has every row start with TT (index becomes the end of the header segment)
+  var p1 = content.substring(0, index+4); //split part 1 at the /n following the last TT (p1 ends at the new line character following index)
+  var p2 = content.substring(index+4, content.length); //split p2 into what remains (p2 ends at the end of the text file)
+
+  //divide p1 up into an array of lines
+  var p1Lines = []; //array for rows in the header segment
+  var temp;
+  var count = (p1.match(/\n/g) || []).length; //get number of new line characters in file content
+
+  for (var i = 0; i <= count; i++){
+    index = p1.indexOf("\n"); //find where line ends
+    temp = p1.substring(0, index); //get line
+    p1 = p1.substring(index+1, p1.length); //remove line from content p1
+    p1Lines.push(temp); //push line to the array
+  }
+  
+  //divide p2 up into an array of lines
+  var p2Lines = []; //array of rows in the table of data segment
+  count = (p2.match(/\n/g) || []).length; //get number of new line characters in content
+
+  for (var i = 0; i <= (count-1); i++){
+    index = p2.indexOf("\n"); //find where line ends
+    temp = p2.substring(0, index); //get line
+    p2 = p2.substring(index+1, p2.length); //remove line from content p2
+    p2Lines.push(temp); //push line to the array
+  }
+
+  //p2Lines.shift(); //remove extra line (this is sometimes necessary and sometimes not, left in but commented out just in case)
+  
+  //plot data to the output sheet - header segment
+  count = p1Lines.length;
+
+  //post header to spreadsheet 
+  for (var i = 1; i <= count; i++){
+    output.getRange("A" + i).setValue(p1Lines[i-1]); //post each header line in column A
+    temp = i; //get last line
+  }
+
+  //plot data to the output sheet - data table segment
+  count = p2Lines.length;
+  var temparray = []; //set empty temp array for splitting up rows of data
+
+  //post data table to spreadsheet
+  for (var i = 0; i < count; i++){
+    temparray = p2Lines[i].split("\t"); //split each line into a temp array split by tabs
+    for (var j = 0; j < temparray.length; j++){
+        output.getRange(temp+i, j+1).setValue(temparray[j]); //print to the correct cell starting from column A, row temp+i
+    }
+  }
+}

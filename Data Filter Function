@@ -1,0 +1,57 @@
+//This function is designed to emulate Microsoft Excel and Visual Basic's AutoFilter function, which does not have a direct equivalent in Google Sheets or Google Apps Script.
+//This function was designed and written by me in order to perform the same functionality in Sheets as in Excel, but in a slightly more limited scope. This code is
+//designed with a specific spreadsheet in mind, but can be tweaked and edited to perform similar functionality within other spreadsheets if necessary. The function is also 
+//specifically designed in such a way that it will filter an ENTIRE sheet, from A1 to whatever cell is specified. This can be edited, but that is the default functionality.
+//The function supports cell ranges up to column ZZ. Double-letter columns are untested, but should work correctly.
+
+//The parameter 'sheet' is anticipated to be a specific Sheet, obtained by using SpreadsheetApp.getActiveSpreadsheet() class.
+//The parameter 'cell' is anticipated to be a string value of a cell's A1-format designation (Example: "A75"). 'cell' is the END of the data range to be filtered,
+//starting from A1.
+//The parameter 'search' is anticipated to be a value that the function will search for within the data range A1 to 'cell.' Only data matching 'search' will be shown in 
+//the sheet after running the function.
+
+function filterData(sheet, cell, search){
+    
+  var col;
+  var row;
+  var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //alphabet variable for checking numbers
+  var temp;
+
+  if (isNaN(cell.charAt(1))){ //check if column is a two-letter column (Ex: AA)
+    row = cell.substring(2, cell.length); //set row to the rest of cell
+
+    for (var i = 0; i < alpha.length; i++){ 
+      if (cell.charAt(0) == alpha.charAt(i)){ //check the column values of cell against the alphabet to determine column index
+        temp = i; //set temp to the index of the column letter
+      }
+
+      if (cell.charAt(1) == alpha(i)){ //check the second column letter against the alphabet
+        temp = temp + i + 26; //set temp to the existing value + the index + 26
+      }
+    }
+
+    col = temp; //set col to temp
+    row = parseInt(row); //parse row to int
+  }
+  else {
+    row = cell.substring(1, cell.length); //set row to the rest of cell
+
+    for (var i = 0; i < alpha.length; i++){ 
+      if (cell.charAt(0) === alpha.charAt(i)){ //check the column values of cell against the alphabet to determine column index
+        temp = i;
+      }
+    }
+
+    col = temp; //set col to temp
+    row = parseInt(row); //parse row to int
+  }
+
+  var range = sheet.getRange(1, 1, col, row); //get range A1 to cell
+
+  for (var i = 2; i <= sheet.getLastRow(); i++){ //check rows (start on 2 to avoid filtering out headers) 
+    if (sheet.getRange(i, 1).getValue() != search){
+      sheet.hideRows(i);
+    }
+  }
+
+}

@@ -1,0 +1,77 @@
+//I do not claim the majority of this code, it was found here -> https://spreadsheet.dev/radio-buttons-in-google-sheets-using-apps-script
+//and edited to meet the needs of the project as necessary. This is the edited code. All edits done by me, but I did not make the original code.
+//The edited code is designed for use with a specific Google Sheets spreadsheet, but can be easily edited based on the original code found at the link above
+//or my edited version depending on the needs of the script in question.
+
+//The purpose of this code is to simulate radio buttons in a Google Sheets spreadsheet, as Google Sheets does not natively support radio buttons as of now.
+//This is accomplished by using checkboxes on the spreadsheet itself, and then looking for edit triggers, checking if the trigger was the checking of a checkbox,
+//then unchecking all other checkboxes. This code is set up to work with 2 checkboxes at a time in either a row or column, but can easily be expanded to many checkboxes,
+//as the original code (see link) allows for functionality with an entire column.
+
+//set up the trigger to detect when the spreadsheet is edited
+function setEditTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+
+  if (triggers != null && triggers.length > 0){
+    return;
+  }
+  
+  //call function to see if edit was a checkbox being checked
+  ScriptApp.newTrigger("checkIfCheckboxChecked").forSpreadsheet(SpreadsheetApp.getActive()).onEdit().create();
+}
+
+//function to check if a checkbox was checked 
+function checkIfCheckboxChecked(e) {
+
+  //check which sheet the checkbox was checked on
+
+  //if the edit occurred in a COLUMN of checkboxes
+  if (e != null && e.range.columnStart === e.range.columnEnd && e.range.rowStart === 3 && e.range.rowEnd === 3) { //edit occurred in row 3 and only one cell (change row value as needed)
+    if (e.oldValue === "false" && e.value === "TRUE") { //if checkbox is changed from unchecked to checked
+      uncheckOtherCheckboxesCol(e.range.columnStart); //call function to uncheck the other box
+    }
+  }
+
+  //if the edit occurred in a ROW of checkboxes
+  if (e != null && e.range.rowStart === e.range.rowEnd && e.range.columnStart === 4 && e.range.columnEnd === 4) { //edit occurred in column 4 and only one cell (change column value as needed)
+    if (e.oldValue === "false" && e.value === "TRUE") { //if checkbox is changed from unchecked to checked
+      uncheckOtherCheckboxesRow(e.range.rowStart); //call function to uncheck the other box
+    }
+  }
+}
+
+//function to uncheck the other checkbox when one is checked (checkboxes in a row)
+function uncheckOtherCheckboxesCol(colToIgnore) {
+  var range = SpreadsheetApp.getActive().getSheetByName("Aluminum RP").getRange("F3:G3"); //get range containing the two checkboxes (change these values as needed)
+  var values = range.getValues(); //get values of the checkboxes
+  values.forEach(function (col, index) { //for each value in the range (so twice, in this case)
+    
+    if (colToIgnore === 6){ //if the checkbox was checked in column 6 (F)
+      values[0][1] = false; //uncheck the checkbox in column 7 (G)
+    }
+    else if (colToIgnore === 7){ //if the checkbox was checked in column 7 (G)
+      values[0][0] = false; //uncheck the checkbox in column 6 (F)
+    }
+    
+  });
+
+  range.setValues(values); //set the values of the checkboxes
+}
+
+//function to uncheck the other checkbox when one is checked (checkboxes in a column)
+function uncheckOtherCheckboxesRow(rowToIgnore) {
+  var range = SpreadsheetApp.getActive().getSheetByName("Diss Metals Translator").getRange("D9:D10"); //get range containing the two checkboxes (change these values as needed)
+  var values = range.getValues(); //get values of the checkboxes
+  values.forEach(function (row, index) { //for each value in the range (so twice, in this case)
+    
+    if (rowToIgnore === 9){ //if the checkbox was checked in row 9
+      values[1][0] = false; //uncheck the checkbox in row 10
+    }
+    else if (rowToIgnore === 10){ //if the checkbox was checked in row 10
+      values[0][0] = false; //uncheck the checkbox in row 9 
+    }
+    
+  });
+
+  range.setValues(values); //set the values of the checkboxes in the spreadsheet
+}
